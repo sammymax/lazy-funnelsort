@@ -1,0 +1,7 @@
+# ignore executables (things with no extension)
+*
+!*.*
+!*/
+
+!Makefile
+*.o
