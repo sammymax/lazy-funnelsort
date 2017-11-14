@@ -4,5 +4,7 @@
 #include "funnelsort.h"
 
 int main() {
-	funnelsort(std::vector<int>{12, 2}, std::greater<int>());
+	std::vector<int> v {12, 2};
+	funnelsort(v.begin(), v.end(), std::greater<int>());
+	funnelsort(v.begin(), v.end());
 }

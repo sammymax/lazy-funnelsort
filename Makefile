@@ -10,3 +10,6 @@ all: $(OBJS)
 
 %.o: $.cpp
 	$(CPP) -c $(CPPFLAGS) $< -o $@
+
+clean:
+	rm $(OBJS)
