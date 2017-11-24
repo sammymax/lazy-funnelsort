@@ -5,7 +5,8 @@
 
 using std::vector;
 // if size of vector is <= this, don't recurse
-const size_t kBaseCase = 32;
+// must be at least 8 becase floor(7^ (1/3) ) = 1
+const size_t kBaseCase = 8;
 
 namespace {
 template <class T>
@@ -87,7 +88,7 @@ FunnelTree<T>* create_tree_(int d, const vector<size_t>& depth_to_size,
 							T* buffer, size_t *buf_used) {
 	auto *res = new FunnelTree<T>;
 	// this node represents a single thing; leaf node
-	if (l == r + 1) {
+	if (r == l + 1) {
 		res->constbuffer = lists[l].data();
 		res->end = lists[l].size();
 		res->cap = lists[l].size();
