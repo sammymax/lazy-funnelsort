@@ -3,8 +3,6 @@
 #include <functional>
 #include <vector>
 
-#include "lazy_allocator.h"
-
 using std::vector;
 // if size of vector is <= this, don't recurse
 const size_t kBaseCase = 32;
@@ -19,7 +17,49 @@ class FunnelTree {
 		T *buffer;
 		const T *constbuffer;
 		size_t start = 0, end, cap;
+
+		T get() {
+			return (constbuffer == nullptr) ? buffer[start] : constbuffer[start];
+		}
+		T take() {
+			T res = get();
+			start++;
+			return res;
+		}
+
+		template <class Comp>
+		void fill(Comp comp);
 };
+
+// assumption: this can only be called when start = end
+template <class T>
+template <class Comp>
+void FunnelTree<T>::fill(Comp comp) {
+	// we are in a leaf, or in a node whose children are both done
+	if ((left == nullptr && right == nullptr) || (left->done && right->done)) {
+		done = true;
+		return;
+	}
+	start = 0;
+	end = 0;
+	while (end < cap) {
+		if (left->start == left->end)
+			left->fill(comp);
+		if (right->start == right->end)
+			right->fill(comp);
+
+		if (left->done && right->done) break;
+		if (left->done)
+			buffer[end++] = right->take();
+		else if (right->done)
+			buffer[end++] = left->take();
+		else {
+			T a = left->get(), b = right->get();
+			if (comp(a, b)) buffer[end++] = left->take();
+			else buffer[end++] = right->take();
+		}
+	}
+}
 
 void calculate_bufsizes_(vector<size_t>& v, int l, int r, size_t size) {
 	// take square root of size
@@ -125,5 +165,8 @@ vector<typename RandomIt::value_type> funnelsort(RandomIt first, RandomIt last, 
 
 template <class T, class Comp>
 vector<T> merge(const vector<vector<T>>& lists, Comp comp) {
-	auto tree = create_tree(lists);
+	auto root = create_tree(lists);
+	root->fill(comp);
+	vector<T> res(root->buffer, root->buffer + root->cap);
+	return res;
 }
