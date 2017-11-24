@@ -56,8 +56,8 @@ void FunnelTree<T>::fill(Comp comp) {
 			buffer[end++] = left->take();
 		else {
 			T a = left->get(), b = right->get();
-			if (comp(a, b)) buffer[end++] = left->take();
-			else buffer[end++] = right->take();
+			if (comp(a, b)) buffer[end++] = right->take();
+			else buffer[end++] = left->take();
 		}
 	}
 }
@@ -111,8 +111,8 @@ FunnelTree<T>* create_tree(const vector<vector<T>>& lists) {
 	for (auto& l : lists)
 		tot_size += l.size();
 
-	int max_depth = 1;
-	while ((1 << max_depth) < k)
+	int max_depth = 0;
+	while ((2 << max_depth) < k)
 		max_depth++;
 
 	const vector<size_t> bufsizes = calculate_bufsizes(max_depth + 1, tot_size);
