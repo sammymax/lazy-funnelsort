@@ -18,7 +18,7 @@ int main() {
 			if (res[j] != v[j]) ok = false;
 
 		if (!ok) {
-			cout << "failed! ours/theirs:\n";
+			cout << "size " << i << " failed! ours/theirs:\n";
 			for (auto x : res) cout << x << ' ';
 			cout << '\n';
 			for (auto x : v) cout << x << ' ';
