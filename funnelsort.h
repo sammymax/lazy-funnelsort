@@ -13,11 +13,12 @@ template <class T>
 class FunnelTree {
 	public:
 		FunnelTree *left = nullptr, *right = nullptr;
-		bool done = false;
 		// the output buffer for this node; constbuffer is for leaves
 		T *buffer;
 		const T *constbuffer;
 		size_t start = 0, end, cap;
+		// will calling fill() add any new numbers?
+		bool can_fill = true;
 
 		T get() {
 			return (constbuffer == nullptr) ? buffer[start] : constbuffer[start];
@@ -36,11 +37,7 @@ class FunnelTree {
 template <class T>
 template <class Comp>
 void FunnelTree<T>::fill(Comp comp) {
-	// we are in a leaf, or in a node whose children are both done
-	if ((left == nullptr && right == nullptr) || (left->done && right->done)) {
-		done = true;
-		return;
-	}
+	if (!can_fill) return;
 	start = 0;
 	end = 0;
 	while (end < cap) {
@@ -49,10 +46,14 @@ void FunnelTree<T>::fill(Comp comp) {
 		if (right->start == right->end)
 			right->fill(comp);
 
-		if (left->done && right->done) break;
-		if (left->done)
+		can_fill = left->can_fill || (left->start != left->end) ||
+			right->can_fill || (right->start != right->end);
+		if (!can_fill) {
+			break;
+		}
+		if (left->start == left->end)
 			buffer[end++] = right->take();
-		else if (right->done)
+		else if (right->start == right->end)
 			buffer[end++] = left->take();
 		else {
 			T a = left->get(), b = right->get();
@@ -92,17 +93,20 @@ FunnelTree<T>* create_tree_(int d, const vector<size_t>& depth_to_size,
 		res->constbuffer = lists[l].data();
 		res->end = lists[l].size();
 		res->cap = lists[l].size();
+		res->can_fill = false;
 		return res;
 	}
 	// since it's un-populated
 	res->end = 0;
 	res->cap = depth_to_size[d];
 
+	res->constbuffer = nullptr;
 	res->buffer = buffer + (*buf_used);
 	*buf_used += res->cap;
 	int m = (l + r) / 2;
 	res->left = create_tree_(d+1, depth_to_size, lists, l, m, buffer, buf_used);
 	res->right = create_tree_(d+1, depth_to_size, lists, m, r, buffer, buf_used);
+	return res;
 }
 
 template <class T>
