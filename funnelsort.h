@@ -1,3 +1,5 @@
+#ifndef FUNNELSORT_H
+#define FUNNELSORT_H
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -175,3 +177,5 @@ vector<T> merge(const vector<vector<T>>& lists, Comp comp) {
 	vector<T> res(root->buffer, root->buffer + root->cap);
 	return res;
 }
+
+#endif  // FUNNELSORT_H
