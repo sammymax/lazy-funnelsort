@@ -7,4 +7,5 @@
 *.o
 *.d
 
+*.csv
 cachegrind.out*
