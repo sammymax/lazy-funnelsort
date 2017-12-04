@@ -14,6 +14,7 @@ namespace {
 template <class T>
 class FunnelTree {
 	public:
+		std::function<bool(T&, T&)> comp;
 		FunnelTree *left = nullptr, *right = nullptr;
 		// the output buffer for this node; constbuffer is for leaves
 		T *buffer;
@@ -31,22 +32,20 @@ class FunnelTree {
 			return res;
 		}
 
-		template <class Comp>
-		void fill(Comp comp);
+		void fill();
 };
 
 // assumption: this can only be called when start = end
 template <class T>
-template <class Comp>
-void FunnelTree<T>::fill(Comp comp) {
+void FunnelTree<T>::fill() {
 	if (!can_fill) return;
 	start = 0;
 	end = 0;
 	while (end < cap) {
 		if (left->start == left->end)
-			left->fill(comp);
+			left->fill();
 		if (right->start == right->end)
-			right->fill(comp);
+			right->fill();
 
 		can_fill = left->can_fill || (left->start != left->end) ||
 			right->can_fill || (right->start != right->end);
@@ -85,11 +84,12 @@ vector<size_t> calculate_bufsizes(int depth, size_t initial_size) {
 	return res;
 }
 
-template <class T>
+template <class T, class Comp>
 FunnelTree<T>* create_tree_(int d, const vector<size_t>& depth_to_size,
 							const vector<vector<T>>& lists, int l, int r,
-							T* buffer, size_t *buf_used) {
+							T* buffer, size_t *buf_used, Comp comp) {
 	auto *res = new FunnelTree<T>;
+	res->comp = comp;
 	// this node represents a single thing; leaf node
 	if (r == l + 1) {
 		res->constbuffer = lists[l].data();
@@ -106,13 +106,13 @@ FunnelTree<T>* create_tree_(int d, const vector<size_t>& depth_to_size,
 	res->buffer = buffer + (*buf_used);
 	*buf_used += res->cap;
 	int m = (l + r) / 2;
-	res->left = create_tree_(d+1, depth_to_size, lists, l, m, buffer, buf_used);
-	res->right = create_tree_(d+1, depth_to_size, lists, m, r, buffer, buf_used);
+	res->left = create_tree_(d+1, depth_to_size, lists, l, m, buffer, buf_used, comp);
+	res->right = create_tree_(d+1, depth_to_size, lists, m, r, buffer, buf_used, comp);
 	return res;
 }
 
-template <class T>
-FunnelTree<T>* create_tree(const vector<vector<T>>& lists) {
+template <class T, class Comp>
+FunnelTree<T>* create_tree(const vector<vector<T>>& lists, Comp comp) {
 	size_t k = lists.size(), tot_size = 0;
 	for (auto& l : lists)
 		tot_size += l.size();
@@ -130,7 +130,7 @@ FunnelTree<T>* create_tree(const vector<vector<T>>& lists) {
 	T* buffer = new T[tot_buf_size];
 
 	size_t buf_used = 0;
-	return create_tree_(0, bufsizes, lists, 0, k, buffer, &buf_used);
+	return create_tree_(0, bufsizes, lists, 0, k, buffer, &buf_used, comp);
 }
 }  // namespace
 
@@ -172,8 +172,8 @@ vector<typename RandomIt::value_type> funnelsort(RandomIt first, RandomIt last, 
 
 template <class T, class Comp>
 vector<T> merge(const vector<vector<T>>& lists, Comp comp) {
-	auto root = create_tree(lists);
-	root->fill(comp);
+	auto root = create_tree(lists, comp);
+	root->fill();
 	vector<T> res(root->buffer, root->buffer + root->cap);
 	return res;
 }
