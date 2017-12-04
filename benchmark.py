@@ -15,12 +15,18 @@ stdsort_res_file = 'stdsort_results.csv'
 funnelsort_writer = csv.writer(open(funnelsort_res_file, 'w'))
 stdsort_writer = csv.writer(open(stdsort_res_file, 'w'))
 
-for arr_size in range(98, 100):
+arr_range = [100, 200, 400, 1000, 2000, 4000, 8000, 20000, int(1e6), int(1e6*2), int(1e6*4),
+        int(1e6*6)]
+
+for arr_size in arr_range:
     for method in [0, 1]: #0 is funnelsort, 1 is std sort
         print("Currently processing arr size %d, method %d"%(arr_size, method))
         stream = subprocess.Popen("valgrind --tool=cachegrind ./test_parameter.o %d %d"%(arr_size, method), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout = stream.stdout.read().decode('utf-8')
         stderr = stream.stderr.read().decode('utf-8')
+        #print(stdout)
+        time = float(stdout.splitlines()[2].split(' ')[-1])
+        print("Time required", time)
         number = stderr.splitlines()[0].split("==")[1]
         #print(number)
         cachegrind_name = 'cachegrind.out.'+number
@@ -28,17 +34,18 @@ for arr_size in range(98, 100):
         output_lines = cachegrind_output.read().splitlines()
         last_line = output_lines[-1]
         summary_nums = list(map(int, last_line.split(" ")[1:]))
-        print(summary_nums)
+        print("Summary numbers", summary_nums)
         Irefs, IL1miss, ILLmiss, DataReadref, DataReadL1miss, DataReadLLmiss, DataWriteref, DataWriteL1miss, DataWriteLLmiss = summary_nums
         TotDataref = DataReadref + DataWriteref
         TotDataL1miss = DataReadL1miss + DataWriteL1miss
         TotDataLLmiss = DataReadLLmiss + DataWriteLLmiss
-        print(float(TotDataL1miss)/TotDataref)
-        print(float(TotDataLLmiss)/TotDataref)
+        #print(float(TotDataL1miss)/TotDataref)
+        #print(float(TotDataLLmiss)/TotDataref)
         res_write = funnelsort_writer 
         if method == 1:
             res_write = stdsort_writer
-        res_write.writerow([arr_size, TotDataref, TotDataL1miss, TotDataLLmiss])
+        res_write.writerow([arr_size, TotDataref, TotDataL1miss, TotDataLLmiss, time])
+        subprocess.Popen("rm %s"%cachegrind_name, shell=True) #to clean the directory
 
 
 
