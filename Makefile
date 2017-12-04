@@ -1,6 +1,7 @@
-EXEC = test
-CPP := g++
-CPPFLAGS := -std=c++11
+EXEC = test.x test_parameter.x
+CXX := g++
+CXXFLAGS := -std=c++11
+LINK = ${CXX} $^ -o $@
 
 ifeq ($(DEBUG),1)
 	CPPFLAGS += -g -DNDEBUG
@@ -11,11 +12,13 @@ endif
 SRCS=$(wildcard *.cpp)
 OBJS=$(SRCS:.cpp=.o)
 
-all: $(OBJS)
-	$(CPP) $(OBJS) -o $(EXEC)
+all: $(EXEC)
+
+%.x: %.o
+	$(CXX) $^ -o $@
 
 %.o: %.cpp
-	$(CPP) -MMD -c $(CPPFLAGS) $< -o $@
+	$(CXX) -MMD -c $(CXXFLAGS) $< -o $@
 
 clean:
 	rm -f $(OBJS)

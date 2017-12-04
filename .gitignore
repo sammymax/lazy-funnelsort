@@ -6,5 +6,6 @@
 !Makefile
 *.o
 *.d
+*.x
 
 cachegrind.out*
