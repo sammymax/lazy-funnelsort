@@ -154,24 +154,24 @@ vector<typename RandomIt::value_type> funnelsort(RandomIt first, RandomIt last, 
 template <class RandomIt>
 class default_sort { 
 	//class provided to lazy funnelsort for std::sort
-	//typedef T typename RandomIt::value_type;
+	typedef typename RandomIt::value_type T;
 
 	public:
-	bool operator() (typename RandomIt::value_type& a, typename RandomIt::value_type& b) {
-		return std::greater<typename RandomIt::value_type>(a, b);
+	bool operator() (const T& a, const T& b) {
+		return a > b;
 	}
 
-	void right_take_update(typename RandomIt::value_type& t) {
+	void right_take_update(const T& t) {
 		//Update information of point taken from right buffer in merge step
 		return;
 	}
 
-	void left_take_update(typename RandomIt::value_type& t) {
+	void left_take_update(const T& t) {
 		//Update information of point taken from left buffer in merge step
 		return;
 	}
 
-	std::vector<typename RandomIt::value_type> base_case(std::vector<typename RandomIt::value_type> arr) {	
+	std::vector<T> base_case(std::vector<T> arr) {	
 		//base case to take by lazy funnelsort
 		std::sort(arr.begin(), arr.end());
 		return arr;
