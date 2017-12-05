@@ -157,7 +157,7 @@ class maximal_merge {
 
 int main() {
 
-	int N = 11;
+	int N = 40;
 
 	std::vector<point> all_points;
 	int xcoords [N] = {1, 2, 3, 4, 5, 7, 8, 6, 10, 11, 9};
@@ -166,11 +166,19 @@ int main() {
 
 	for (int i=0; i < N; i++) {
 		point new_p;
-		new_p.x = xcoords[i];
-		new_p.y = ycoords[i];
-		new_p.z = zcoords[i];
+		new_p.x = rand()%15; //xcoords[i];
+		new_p.y = rand()%15; //ycoords[i];
+		new_p.z = rand()%15; //zcoords[i];
 		new_p.marked = true;
-		all_points.push_back(new_p);
+		bool add = true;
+		for (point p: all_points) {
+			//prevent duplicates from being added
+			if (new_p.x == p.x && new_p.y == p.y && new_p.z == p.z) {
+				add = false;
+				break;
+			}
+		}
+		if (add) all_points.push_back(new_p);
 	}
 
 	//brute-force check--p.true_marked holds result
@@ -208,7 +216,7 @@ int main() {
 		}
 		
 		pointprint(p);
-		if (p.marked == true_status) cout << "Marking is right!" << endl;
-		else cout << "ALERT: Marking is WRONG" << endl;
+		if (p.marked == true_status) cout << "Marking is right! It is: " << p.marked << endl;
+		else cout << "ALERT: Marking is WRONG. True: " << true_status << " result: " <<p.marked<< endl;
 	}
 }
