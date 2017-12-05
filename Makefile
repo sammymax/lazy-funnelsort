@@ -4,9 +4,9 @@ CXXFLAGS := -std=c++11
 LINK = ${CXX} $^ -o $@
 
 ifeq ($(DEBUG),1)
-	CPPFLAGS += -g -DNDEBUG
+	CXXFLAGS += -g -DNDEBUG
 else
-	CPPFLAGS += -O3 -march=native -g
+	CXXFLAGS += -O3 -march=native -g
 endif
 
 SRCS=$(wildcard *.cpp)
