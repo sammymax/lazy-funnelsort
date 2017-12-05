@@ -11,10 +11,11 @@ using std::vector;
 const size_t kBaseCase = 8;
 
 namespace {
-template <class T>
+template <class T, class C>
 class FunnelTree {
 	public:
-		std::function<bool(T&, T&)> comp;
+		C comp;
+
 		FunnelTree *left = nullptr, *right = nullptr;
 		// the output buffer for this node; constbuffer is for leaves
 		T *buffer;
@@ -26,9 +27,22 @@ class FunnelTree {
 		T get() {
 			return (constbuffer == nullptr) ? buffer[start] : constbuffer[start];
 		}
-		T take() {
+
+		T selftake() {
 			T res = get();
 			start++;
+			return res;
+		}
+
+		T righttake() {
+			T res = right->selftake();
+			comp.right_take_update(res);
+			return res;
+		}
+
+		T lefttake() { 
+			T res = left->selftake();
+			comp.left_take_update(res);
 			return res;
 		}
 
@@ -36,8 +50,8 @@ class FunnelTree {
 };
 
 // assumption: this can only be called when start = end
-template <class T>
-void FunnelTree<T>::fill() {
+template <class T, class C>
+void FunnelTree<T, C>::fill() {
 	if (!can_fill) return;
 	start = 0;
 	end = 0;
@@ -53,13 +67,13 @@ void FunnelTree<T>::fill() {
 			break;
 		}
 		if (left->start == left->end)
-			buffer[end++] = right->take();
+			buffer[end++] = righttake();
 		else if (right->start == right->end)
-			buffer[end++] = left->take();
+			buffer[end++] = lefttake();
 		else {
 			T a = left->get(), b = right->get();
-			if (comp(a, b)) buffer[end++] = right->take();
-			else buffer[end++] = left->take();
+			if (comp(a, b)) buffer[end++] = righttake();
+			else buffer[end++] = lefttake();
 		}
 	}
 }
@@ -85,10 +99,10 @@ vector<size_t> calculate_bufsizes(int depth, size_t initial_size) {
 }
 
 template <class T, class Comp>
-FunnelTree<T>* create_tree_(int d, const vector<size_t>& depth_to_size,
+FunnelTree<T, Comp>* create_tree_(int d, const vector<size_t>& depth_to_size,
 							const vector<vector<T>>& lists, int l, int r,
 							T* buffer, size_t *buf_used, Comp comp) {
-	auto *res = new FunnelTree<T>;
+	auto *res = new FunnelTree<T, Comp>;
 	res->comp = comp;
 	// this node represents a single thing; leaf node
 	if (r == l + 1) {
@@ -112,7 +126,7 @@ FunnelTree<T>* create_tree_(int d, const vector<size_t>& depth_to_size,
 }
 
 template <class T, class Comp>
-FunnelTree<T>* create_tree(const vector<vector<T>>& lists, Comp comp) {
+FunnelTree<T, Comp>* create_tree(const vector<vector<T>>& lists, Comp comp) {
 	size_t k = lists.size(), tot_size = 0;
 	for (auto& l : lists)
 		tot_size += l.size();
@@ -138,8 +152,36 @@ template <class RandomIt, class Comp>
 vector<typename RandomIt::value_type> funnelsort(RandomIt first, RandomIt last, Comp comp);
 
 template <class RandomIt>
+class default_sort { 
+	//class provided to lazy funnelsort for std::sort
+	//typedef T typename RandomIt::value_type;
+
+	public:
+	bool operator() (typename RandomIt::value_type& a, typename RandomIt::value_type& b) {
+		return std::greater<typename RandomIt::value_type>(a, b);
+	}
+
+	void right_take_update(typename RandomIt::value_type& t) {
+		//Update information of point taken from right buffer in merge step
+		return;
+	}
+
+	void left_take_update(typename RandomIt::value_type& t) {
+		//Update information of point taken from left buffer in merge step
+		return;
+	}
+
+	std::vector<typename RandomIt::value_type> base_case(std::vector<typename RandomIt::value_type> arr) {	
+		//base case to take by lazy funnelsort
+		std::sort(arr.begin(), arr.end());
+		return arr;
+	}
+};
+
+template <class RandomIt>
 vector<typename RandomIt::value_type> funnelsort(RandomIt first, RandomIt last) {
-	return funnelsort(first, last, std::greater<typename RandomIt::value_type>());
+	return funnelsort(first, last, default_sort<RandomIt>());
+	//return funnelsort(first, last, std::greater<typename RandomIt::value_type>());
 }
 
 template <class T, class Comp>
@@ -151,8 +193,7 @@ vector<typename RandomIt::value_type> funnelsort(RandomIt first, RandomIt last, 
 	size_t size = last - first;
 	if (size <= kBaseCase) {
 		vector<T> arr_copy(first, last);
-		std::sort(arr_copy.begin(), arr_copy.end());
-		return arr_copy;
+		return comp.base_case(arr_copy);
 	}
 
 	int szCubeRoot = pow(size, 1.0/3.0);
