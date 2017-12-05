@@ -1,4 +1,4 @@
-EXEC = test.x test_parameter.x
+EXEC = test.x test_parameter.x distribution_sweep.x
 CXX := g++
 CXXFLAGS := -std=c++11
 LINK = ${CXX} $^ -o $@
