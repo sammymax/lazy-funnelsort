@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
 		res = funnelsort(v.begin(), v.end());
 	} else {
 		cout << "Using std sort" << endl;
-		sort(v.begin(), v.end());
+		std::stable_sort(v.begin(), v.end());
 	}
 
 	end = high_resolution_clock::now();
