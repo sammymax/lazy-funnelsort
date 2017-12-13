@@ -14,6 +14,9 @@ namespace {
 template <class T, class C>
 class FunnelTree {
 	public:
+		~FunnelTree() {
+			delete[] buffer;
+		}
 		C comp;
 
 		FunnelTree *left = nullptr, *right = nullptr;
